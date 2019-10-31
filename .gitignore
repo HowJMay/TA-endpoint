@@ -32,3 +32,4 @@
 *.dSYM/
 
 https_client
+.vscode/

@@ -2,7 +2,6 @@
 
 MAKE = make
 
-CC = $(CROSS)gcc
 LD = $(CROSS)ld
 STRIP = $(CROSS)strip
 
