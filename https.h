@@ -5,7 +5,6 @@
 #ifndef HTTPS_CLIENT_HTTPS_H
 #define HTTPS_CLIENT_HTTPS_H
 
-/*---------------------------------------------------------------------*/
 #include <stdbool.h>
 #include "mbedtls/certs.h"
 #include "mbedtls/ctr_drbg.h"
@@ -13,11 +12,10 @@
 #include "mbedtls/error.h"
 #include "mbedtls/net.h"
 
-/*---------------------------------------------------------------------*/
 #define H_FIELD_SIZE 512
 #define H_READ_SIZE 2048
 
-typedef enum { success = 0, error = 1 } http_retcode_t;
+typedef enum { success = 0, error = -1 } http_retcode_t;
 
 typedef struct {
   char method[8];
@@ -70,15 +68,10 @@ typedef struct {
 
 } HTTP_INFO;
 
-/*---------------------------------------------------------------------*/
-
 char *strtoken(char *src, char *dst, int size);
 
 http_retcode_t http_init(HTTP_INFO *hi, bool verify);
 http_retcode_t http_close(HTTP_INFO *hi);
-http_retcode_t http_get(HTTP_INFO *hi, char *url, char *response, int size);
-http_retcode_t http_post(HTTP_INFO *hi, char *url, char *data, char *response,
-                         int size);
 
 void http_strerror(char *buf, int len);
 http_retcode_t http_open(HTTP_INFO *hi, char *url);
@@ -86,5 +79,5 @@ http_retcode_t http_write_header(HTTP_INFO *hi);
 http_retcode_t http_write(HTTP_INFO *hi, char *data, int len);
 http_retcode_t http_write_end(HTTP_INFO *hi);
 http_retcode_t http_read_chunked(HTTP_INFO *hi, char *response, int size);
-
+int https_init(HTTP_INFO *hi, bool https, bool verify);
 #endif  // HTTPS_CLIENT_HTTPS_H

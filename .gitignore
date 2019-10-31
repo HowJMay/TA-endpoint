@@ -33,3 +33,4 @@
 
 https_client
 .vscode/
+*.gcno

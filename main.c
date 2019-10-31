@@ -3,20 +3,18 @@
 #include <string.h>
 #include "https.h"
 
-int main(int argc, char *argv[]) {
-  char *host = "https://tangle-accel.biilabs.io/";
-  char req_body[1024], response[4096];
-  char api[] = "transaction/";
-  int ret, size;
+#define HOST "https://tangle-accel.biilabs.io/"
+#define API "transaction/"
 
+int main(int argc, char *argv[]) {
+  char req_body[1024], response[4096];
+  int ret, size;
+  char url[] = HOST API;
   HTTP_INFO http_info;
 
   // Init http session. verify: check the server CA cert.
-  http_init(&http_info, false);
-  size_t url_len = (strlen(host) + strlen(api) + 1);
-  char *url;
-  url = (char *)malloc(url_len * sizeof(char));
-  snprintf(url, url_len, "%s%s", host, api);
+  https_init(&http_info, true, false);
+
   if (http_open(&http_info, url) < 0) {
     http_strerror(req_body, 1024);
     printf("socket error: %s \n", req_body);
