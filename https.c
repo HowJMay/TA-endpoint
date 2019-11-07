@@ -690,7 +690,7 @@ http_retcode_t http_write_header(HTTP_INFO *hi) {
   return 0;
 }
 
-http_retcode_t http_write(HTTP_INFO *hi, char *data, int len) {
+int http_write(HTTP_INFO *hi, char *data, int len) {
   char str[10];
   http_retcode_t ret;
   int l;
