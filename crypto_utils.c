@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2019 BiiLabs Co., Ltd. and Contributors
+ * All Rights Reserved.
+ * This is free software; you can redistribute it and/or modify it under the
+ * terms of the MIT license. A copy of the license can be found in the file
+ * "LICENSE" at the root of this distribution.
+ */
+
 #include "crypto_utils.h"
 #include <openssl/bio.h>
 #include <openssl/conf.h>
@@ -82,7 +90,13 @@ int get_aes_key(uint8_t *key) {
     hash_chain_res[strlen(hash_chain_res) - 2] = '\0';
   }
 
-  strncpy(key, hash_chain_res, AES_BLOCK_SIZE);
+  char *delim = ":", *token;
+  uint8_t counter = 0;
+  token = strtok(hash_chain_res, delim);
+  while (token != NULL) {
+    key[counter++] = (uint8_t)atoi(token);
+    token = strtok(NULL, delim);
+  }
 
   if (pclose(fp) == -1) {
     perror("close FILE pointer");

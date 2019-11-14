@@ -557,23 +557,16 @@ static int https_read(HTTP_INFO *hi, char *buffer, int len) {
   }
 }
 
-http_retcode_t http_close(HTTP_INFO *hi) { return https_close(hi); }
-
-void http_strerror(char *buf, int len) { mbedtls_strerror(_error, buf, len); }
-
 http_retcode_t http_open(HTTP_INFO *hi, char *url) {
   char host[256], port[10], dir[1024];
-  int sock_fd, verify;
+  int sock_fd, opt;
   bool https;
   http_retcode_t ret;
-  int opt;
   socklen_t slen;
 
   if (NULL == hi) {
     return error;
   }
-
-  verify = hi->tls.verify;
 
   parse_url(url, &https, host, port, dir);
 
@@ -583,7 +576,7 @@ http_retcode_t http_open(HTTP_INFO *hi, char *url) {
       https_close(hi);
     }
 
-    https_init(hi, https, verify);
+    https_init(hi, https, hi->tls.verify);
 
     if ((ret = https_connect(hi, host, port)) < 0) {
       https_close(hi);
@@ -601,7 +594,7 @@ http_retcode_t http_open(HTTP_INFO *hi, char *url) {
         (opt > 0)) {
       https_close(hi);
 
-      https_init(hi, https, verify);
+      https_init(hi, https, hi->tls.verify);
 
       if ((ret = https_connect(hi, host, port)) < 0) {
         https_close(hi);

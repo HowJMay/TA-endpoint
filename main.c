@@ -1,8 +1,21 @@
+/*
+ * Copyright (C) 2019 BiiLabs Co., Ltd. and Contributors
+ * All Rights Reserved.
+ * This is free software; you can redistribute it and/or modify it under the
+ * terms of the MIT license. A copy of the license can be found in the file
+ * "LICENSE" at the root of this distribution.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "crypto_utils.h"
 #include "https.h"
+#include "serializer.h"
+#include "tryte_byte_conv.h"
+
+#define MAX_REQ_LEN 1024
+#define MAX_RES_LEN 4096
 
 #define HOST "https://tangle-accel.biilabs.io/"
 #define API "transaction/"
@@ -10,85 +23,21 @@
   "{\"value\": 0, \"tag\": \"POWEREDBYTANGLEACCELERATOR9\", \"message\": " \
   "\"%s\"}\r\n\r\n"
 #define MSG "THISISMSG9THISISMSG9THISISMSG"
-void ascii_to_trytes(unsigned char const *const input, char *const output) {
-  const char tryte_alphabet[] = "9ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  unsigned int j = 0, dec = 0, lower = 0, upper = 0;
-
-  for (size_t i = 0; input[i]; i++) {
-    dec = input[i];
-    upper = (dec >> 4) & 15;
-    lower = dec & 15;
-    output[j++] = tryte_alphabet[upper];
-    output[j++] = tryte_alphabet[lower];
-  }
-}
-
-void trytes_to_ascii(unsigned char const *const input, char *const output) {
-  const char tryte_alphabet[] = "9ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  unsigned int upper = 0, lower = 0;
-
-  for (size_t i = 0; input[i]; i += 2) {
-    if (input[i] == '9') {
-      upper = 0;
-    } else {
-      upper = input[i] - 64;
-    }
-    if (input[i + 1] == '9') {
-      lower = 0;
-    } else {
-      lower = input[i + 1] - 64;
-    }
-
-    output[i / 2] = (upper << 4) + lower;
-  }
-}
-
-int serialize_msg(uint8_t *ciphertext, uint32_t ciphertext_len, uint8_t *iv,
-                  char *out_msg) {
-  char str_ciphertext[1025] = {}, str_iv[17] = {};
-  memcpy(str_ciphertext, ciphertext, 1024);
-  memcpy(str_iv, iv, 16);
-  sprintf(out_msg, "%s:%d:%s", str_ciphertext, ciphertext_len, str_iv);
-  return 0;
-}
-
-int deserialize_msg(char *msg, uint8_t *ciphertext, uint32_t *ciphertext_len,
-                    uint8_t *iv) {
-  char str_ciphertext[1025] = {}, str_iv[17] = {};
-  const char s[2] = ":";
-  char *token;
-  token = strtok(msg, s);
-  memcpy(ciphertext, token, 1024);
-  int i = 0;
-  while (token != NULL) {
-    token = strtok(NULL, s);
-
-    if (i == 0) {
-      *ciphertext_len = atoi(token);
-    } else if (i == 1) {
-      memcpy(iv, token, 16);
-      break;
-    }
-    i++;
-  }
-
-  return 0;
-}
 
 int main(int argc, char *argv[]) {
-  char req_body[1024] = {}, response[4096] = {}, tryte_msg[1024] = {},
-       msg[1024] = {};
-  uint8_t ciphertext[1024] = {}, iv[16] = {};
-  int ret, size;
+  char req_body[MAX_REQ_LEN] = {}, response[MAX_RES_LEN] = {},
+       tryte_msg[MAX_REQ_LEN] = {}, msg[MAX_REQ_LEN] = {};
   char url[] = HOST API;
+  uint8_t ciphertext[MAX_REQ_LEN] = {}, iv[16] = {};
+  uint32_t ciphertext_len = 0;
+  int ret, size;
   HTTP_INFO http_info;
 
-  char msg_de[1024] = {}, plain[1024] = {};
-  uint32_t ciphertext_len = 0;
   encrypt(MSG, strlen(MSG), ciphertext, &ciphertext_len, iv);
   serialize_msg(ciphertext, ciphertext_len, iv, msg);
   ascii_to_trytes(msg, tryte_msg);
 #if DEBUG
+  char msg_de[MAX_REQ_LEN] = {}, plain[MAX_REQ_LEN] = {};
   printf("msg len = %d, tryte_msg = %d\n", strlen(msg), strlen(tryte_msg));
   trytes_to_ascii(tryte_msg, msg_de);
   if (memcmp(msg, msg_de, ciphertext_len)) {
@@ -107,7 +56,7 @@ int main(int argc, char *argv[]) {
   https_init(&http_info, true, false);
 
   if (http_open(&http_info, url) < 0) {
-    http_strerror(req_body, 1024);
+    http_strerror(req_body, MAX_REQ_LEN);
     printf("socket error: %s \n", req_body);
 
     goto error;
@@ -122,14 +71,14 @@ int main(int argc, char *argv[]) {
   size = http_info.request.content_length;
 
   if (http_write_header(&http_info) < 0) {
-    http_strerror(req_body, 1024);
+    http_strerror(req_body, MAX_REQ_LEN);
     printf("socket error: %s \n", req_body);
 
     goto error;
   }
 
   if (http_write(&http_info, req_body, size) != size) {
-    http_strerror(req_body, 1024);
+    http_strerror(req_body, MAX_REQ_LEN);
     printf("socket error: %s \n", req_body);
 
     goto error;
@@ -137,7 +86,7 @@ int main(int argc, char *argv[]) {
 
   // Write end-chunked
   if (http_write_end(&http_info) < 0) {
-    http_strerror(req_body, 1024);
+    http_strerror(req_body, MAX_REQ_LEN);
     printf("socket error: %s \n", req_body);
 
     goto error;
