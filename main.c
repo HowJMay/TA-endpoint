@@ -15,8 +15,8 @@
 #define ADDRESS                                                                \
   "POWEREDBYTANGLEACCELERATOR999999999999999999999999999999999999999999999999" \
   "999999A"
-#define MSG "%s:THISISMSG9THISISMSG9THISISMSG"
-
+//#define MSG "%s:THISISMSG9THISISMSG9THISISMSG"
+#define MSG "%s:%5d"
 void gen_trytes(uint16_t len, char *out) {
   const char tryte_alphabet[] = "9ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   uint8_t rand_index;
@@ -27,7 +27,7 @@ void gen_trytes(uint16_t len, char *out) {
 }
 
 int send_https_msg(HTTP_INFO *http_info, char const *const url,
-                   char const *const tryte_msg) {
+                   char const *const tryte_msg, char const *const addr) {
   char req_body[1024] = {}, response[4096] = {};
   int ret = 0;
   long size;
@@ -40,7 +40,7 @@ int send_https_msg(HTTP_INFO *http_info, char const *const url,
       goto error;
     }
 
-    sprintf(req_body, REQ_BODY, tryte_msg, ADDRESS);
+    sprintf(req_body, REQ_BODY, tryte_msg, addr);
     printf("body = %s \n", req_body);
     http_info->request.close = false;
     http_info->request.chunked = false;
@@ -88,19 +88,25 @@ int main(int argc, char *argv[]) {
   HTTP_INFO http_info;
 
   uint8_t ciphertext[1024] = {}, iv1[16] = {};
-  uint32_t raw_msg_len = strlen(MSG) + 81 + 1, ciphertext_len = 0, msg_len;
+  uint32_t raw_msg_len = strlen(MSG) + 81 + 5, ciphertext_len = 0, msg_len;
   char tryte_msg[1024] = {}, msg[1024] = {}, url[] = HOST API,
        raw_msg[raw_msg_len], next_addr[82] = {};
   srand(time(NULL));
+  
+  char addr[] = ADDRESS;
+  for (int i = 0; i < 10; i++) {
+    gen_trytes(81, next_addr);
+    int gen_value = rand() % 1000;
+    snprintf(raw_msg, raw_msg_len, MSG, next_addr, gen_value);
+    encrypt(raw_msg, raw_msg_len, ciphertext, &ciphertext_len, iv1);
+    serialize_msg(iv1, ciphertext_len, ciphertext, msg, &msg_len);
+    bytes_to_trytes(msg, msg_len, tryte_msg);
 
-  gen_trytes(81, next_addr);
-  snprintf(raw_msg, raw_msg_len, MSG, next_addr);
-  encrypt(raw_msg, raw_msg_len, ciphertext, &ciphertext_len, iv1);
-  serialize_msg(iv1, ciphertext_len, ciphertext, msg, &msg_len);
-  bytes_to_trytes(msg, msg_len, tryte_msg);
-
-  // Init http session. verify: check the server CA cert.
-  send_https_msg(&http_info, url, tryte_msg);
+    // Init http session. verify: check the server CA cert.
+    send_https_msg(&http_info, url, tryte_msg, addr);
+    strncpy(addr, next_addr, 81);
+  }
+  
 
 #if 0
   uint8_t ciphertext_de[1024] = {}, iv2[16] = {};
