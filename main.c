@@ -40,10 +40,11 @@ void gen_trytes(uint16_t len, char *out) {
   }
 }
 
-void send_https_msg(char const *const host, char const *const port, char const *const api, char const *const tryte_msg,
-                    char const *const addr) {
+int send_https_msg(char const *const host, char const *const port, char const *const api, char const *const tryte_msg,
+                   char const *const addr) {
   char req_body[1024] = {}, res[4096] = {0};
   char *req = NULL;
+  int ret = 0;
   sprintf(req_body, REQ_BODY, tryte_msg, addr);
   set_post_request(api, host, atoi(port), req_body, &req);
 
@@ -55,20 +56,21 @@ void send_https_msg(char const *const host, char const *const port, char const *
   settings.on_body = parser_body_callback;
   http_parser *parser = malloc(sizeof(http_parser));
 
-  while (parser->status_code != HTTP_OK) {
-    connect_info_t info = {.https = true};
-    http_open(&info, SSL_SEED, host, port);
-    http_send_request(&info, req);
-    http_read_response(&info, res, sizeof(res) / sizeof(char));
-    http_close(&info);
-    http_parser_init(parser, HTTP_RESPONSE);
-    http_parser_execute(parser, &settings, res, strlen(res));
-    printf("HTTP Response: %s\n", http_res_body);
-    free(http_res_body);
-    http_res_body = NULL;
-  }
+  connect_info_t info = {.https = true};
+  http_open(&info, SSL_SEED, host, port);
+  http_send_request(&info, req);
+  http_read_response(&info, res, sizeof(res) / sizeof(char));
+  http_close(&info);
+  http_parser_init(parser, HTTP_RESPONSE);
+  http_parser_execute(parser, &settings, res, strlen(res));
+  printf("HTTP Response: %s\n", http_res_body);
+  free(http_res_body);
+  http_res_body = NULL;
+
+  ret = parser->status_code;
   free(parser);
   free(req);
+  return ret;
 }
 
 int log_address(char *next_addr) {
@@ -180,7 +182,9 @@ int main(int argc, char *argv[]) {
       bytes_to_trytes((const unsigned char *)msg, msg_len, tryte_msg);
 
       // Init http session. verify: check the server CA cert.
-      send_https_msg(HOST, PORT, API, tryte_msg, addr);
+      if (send_https_msg(HOST, PORT, API, tryte_msg, addr) != HTTP_OK) {
+        fprintf(stderr, "Response from ta server failed");
+      }
 
       strncpy(addr, next_addr, ADDR_LEN);
       free(response);
