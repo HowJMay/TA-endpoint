@@ -68,6 +68,7 @@ void send_https_msg(char const *const host, char const *const port, char const *
     http_res_body = NULL;
   }
   free(parser);
+  free(req);
 }
 
 int log_address(char *next_addr) {
