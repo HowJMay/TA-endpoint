@@ -99,8 +99,8 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 #else
-  if (log_address(next_addr)) {
-    fprintf(stderr, "log address failed");
+  if (log_address(next_addr) != 0) {
+    fprintf(stderr, "log address failed\n");
     return -1;
   }
 #endif
