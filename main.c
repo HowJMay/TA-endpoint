@@ -30,8 +30,8 @@
 
 static char addr_log_template[] = "\n%s\n";
 
+// Test mode only, should not use on deployment
 void gen_trytes(uint16_t len, char *out) {
-  // TODO: warning this may be risk
   const char tryte_alphabet[] = "9ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   uint8_t rand_index;
   for (int i = 0; i < len; i++) {
