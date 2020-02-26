@@ -38,15 +38,15 @@ typedef struct {
   mbedtls_x509_crt *cacert;
 } connect_info_t;
 
-http_retcode_t http_open(connect_info_t *const info, char const *const seed_nonce, char const *const host,
-                         char const *const port);
-http_retcode_t http_send_request(connect_info_t *const info, const char *req);
-http_retcode_t http_read_response(connect_info_t *const info, char *res, size_t res_len);
-http_retcode_t http_close(connect_info_t *const info);
+retcode_t http_open(connect_info_t *const info, char const *const seed_nonce, char const *const host,
+                    char const *const port);
+retcode_t http_send_request(connect_info_t *const info, const char const *req);
+retcode_t http_read_response(connect_info_t *const info, char *res, size_t res_len);
+retcode_t http_close(connect_info_t *const info);
 
-http_retcode_t set_post_request(char const *const api, char const *const host, const uint32_t port,
-                                char const *const req_body, char **out);
-http_retcode_t set_get_request(char const *const api, char const *const host, const uint32_t port, char **out);
+retcode_t set_post_request(char const *const api, char const *const host, const uint32_t port,
+                           char const *const req_body, char **out);
+retcode_t set_get_request(char const *const api, char const *const host, const uint32_t port, char **out);
 
 int parser_body_callback(http_parser *parser, const char *at, size_t length);
 

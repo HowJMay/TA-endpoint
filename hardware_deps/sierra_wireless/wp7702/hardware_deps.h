@@ -6,28 +6,25 @@
  * "LICENSE" at the root of this distribution.
  */
 
-#ifndef ERROR_H
-#define ERROR_H
+#ifndef HARDWARE_DEPS_H
+#define HARDWARE_DEPS_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define HTTP_OK 200
+#include <stdint.h>
+#include "defined_error.h"
 
-typedef enum {
-  RET_OK,
-  RET_WRITE_ERROR,
-  RET_OOM,
-  RET_HTTP_INIT,
-  RET_HTTP_CERT,
-  RET_HTTP_CONNECT,
-  RET_HTTP_SSL,
-  RET_HARDWARE_DEPS,
-} retcode_t;
+#define MAXLINE 1024
+#define IMSI_LEN 15
+#define AES_BLOCK_SIZE 16
+
+retcode_t get_key(uint8_t *key);
+retcode_t get_hardware_identifier(char *device_id);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // ERROR_H
+#endif  // HARDWARE_DEPS_H
